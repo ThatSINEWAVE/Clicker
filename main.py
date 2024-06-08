@@ -1,137 +1,228 @@
-import os
 import pygame
+import pygame_menu
+import sys
+import os
+import json
+import webbrowser
 
 # Initialize Pygame
 pygame.init()
 
-# Set up the game window
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
-window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
+# Constants
+DEFAULT_RESOLUTION = (1280, 720)
+LOGO_SIZE_RATIO = 1 / 3
+CLICK_IMAGE_RATIO = 1 / 3
+BUTTON_SIZE = (50, 50)
+BUTTON_MARGIN = 20
+FADE_SPEED = 5
+
+# Paths
+LOGO_PATH = "assets/startup/logo.png"
+CLICK_IMAGE_PATH = "assets/clicker/click_image.png"
+SETTINGS_ICON_PATH = "assets/icons/Settings.png"
+DISCORD_ICON_PATH = "assets/icons/Discord.png"
+STORE_ICON_PATH = "assets/icons/Store.png"
+SAVE_DATA_PATH = "save_data.txt"
+
+# Available Resolutions
+RESOLUTIONS = [
+    (800, 600),
+    (1024, 768),
+    (1280, 720),
+    (1280, 800),
+    (1366, 768),
+    (1440, 900),
+    (1600, 900),
+    (1920, 1080),
+    (2560, 1440),
+    (3840, 2160),
+]
+
+
+# Load Save Data
+def load_save_data():
+    if os.path.exists(SAVE_DATA_PATH):
+        with open(SAVE_DATA_PATH, "r") as file:
+            data = json.load(file)
+            return data.get("click_count", 0)
+    return 0
+
+
+def save_data(click_count):
+    with open(SAVE_DATA_PATH, "w") as file:
+        json.dump({"click_count": click_count}, file)
+
+
+# Screen Setup
+screen = pygame.display.set_mode(DEFAULT_RESOLUTION)
 pygame.display.set_caption("Clicker Game")
+clock = pygame.time.Clock()
 
-# Load assets
-assets_dir = "assets"
-startup_dir = os.path.join(assets_dir, "startup")
-icons_dir = os.path.join(assets_dir, "icons")
-clicker_dir = os.path.join(assets_dir, "clicker")
 
-logo = pygame.image.load(os.path.join(startup_dir, "logo.svg"))
-settings_icon = pygame.transform.scale(pygame.image.load(os.path.join(icons_dir, "Settings.png")), (75, 75))
-discord_icon = pygame.transform.scale(pygame.image.load(os.path.join(icons_dir, "Discord.png")), (75, 75))
-store_icon = pygame.transform.scale(pygame.image.load(os.path.join(icons_dir, "Store.png")), (75, 75))
-clicker_image = pygame.image.load(os.path.join(clicker_dir, "clicker_image.png"))
+# Load Images
+logo = pygame.image.load(LOGO_PATH)
+click_image = pygame.image.load(CLICK_IMAGE_PATH)
+settings_icon = pygame.image.load(SETTINGS_ICON_PATH)
+discord_icon = pygame.image.load(DISCORD_ICON_PATH)
+store_icon = pygame.image.load(STORE_ICON_PATH)
 
-# Game state
-click_count = 0
-is_fullscreen = False
-save_data_path = "save_data.txt"
 
-# Load or create save data
-if os.path.exists(save_data_path):
-    with open(save_data_path, "r") as file:
-        click_count = int(file.read())
+# Resize Images
+def resize_image(image, ratio, screen):
+    return pygame.transform.scale(image, (int(screen.get_width() * ratio), int(screen.get_height() * ratio)))
 
-# Button properties
-button_size = (75, 75)
-button_padding = 20
 
-# Settings menu
-settings_menu_open = False
-available_resolutions = [(800, 600), (1024, 768), (1280, 720), (1920, 1080)]
-resolution_index = available_resolutions.index((WINDOW_WIDTH, WINDOW_HEIGHT))
+logo = resize_image(logo, LOGO_SIZE_RATIO, screen)
+click_image = resize_image(click_image, CLICK_IMAGE_RATIO, screen)
 
-# Game loop
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
-                mouse_pos = pygame.mouse.get_pos()
-                clicker_rect = clicker_image.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-                if clicker_rect.collidepoint(mouse_pos):
-                    click_count += 1
-                elif not settings_menu_open:
-                    button_positions = [
-                        (WINDOW_WIDTH // 2 - button_size[0] - button_padding, WINDOW_HEIGHT - button_size[1] - button_padding),
-                        (WINDOW_WIDTH // 2, WINDOW_HEIGHT - button_size[1] - button_padding),
-                        (WINDOW_WIDTH // 2 + button_size[0] + button_padding, WINDOW_HEIGHT - button_size[1] - button_padding),
-                    ]
-                    for i, button_pos in enumerate(button_positions):
-                        button_rect = pygame.Rect(button_pos, button_size)
-                        if button_rect.collidepoint(mouse_pos):
-                            if i == 0:
-                                settings_menu_open = True
-                            elif i == 1:
-                                print("Discord button clicked")
-                            else:
-                                print("Store button clicked")
-        elif event.type == pygame.VIDEORESIZE:
-            WINDOW_WIDTH, WINDOW_HEIGHT = event.size
-            window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
 
-    # Clear the screen
-    window.fill((255, 255, 255))
+# Position Elements
+def center_image(image, screen):
+    return image.get_rect(center=screen.get_rect().center)
 
-    # Draw the clicker image
-    clicker_rect = clicker_image.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-    window.blit(clicker_image, clicker_rect)
 
-    # Draw the click counter
-    font = pygame.font.Font(None, 48)
-    text = font.render(f"Clicks: {click_count}", True, (0, 0, 0))
-    text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 100))
-    window.blit(text, text_rect)
+logo_rect = center_image(logo, screen)
+click_image_rect = center_image(click_image, screen)
 
-    # Draw the buttons
-    button_positions = [
-        (WINDOW_WIDTH // 2 - button_size[0] - button_padding, WINDOW_HEIGHT - button_size[1] - button_padding),
-        (WINDOW_WIDTH // 2, WINDOW_HEIGHT - button_size[1] - button_padding),
-        (WINDOW_WIDTH // 2 + button_size[0] + button_padding, WINDOW_HEIGHT - button_size[1] - button_padding),
-    ]
 
-    for i, button_pos in enumerate(button_positions):
-        button_rect = pygame.Rect(button_pos, button_size)
-        if i == 0:
-            window.blit(settings_icon, button_rect)
-        elif i == 1:
-            window.blit(discord_icon, button_rect)
+# Buttons
+def position_buttons(screen):
+    screen_rect = screen.get_rect()
+    button_y = screen_rect.bottom - BUTTON_MARGIN - BUTTON_SIZE[1]
+    settings_rect = pygame.Rect(0, 0, *BUTTON_SIZE)
+    discord_rect = pygame.Rect(0, 0, *BUTTON_SIZE)
+    store_rect = pygame.Rect(0, 0, *BUTTON_SIZE)
+
+    total_width = 3 * BUTTON_SIZE[0] + 2 * BUTTON_MARGIN
+    start_x = (screen_rect.width - total_width) / 2
+    settings_rect.topleft = (start_x, button_y)
+    discord_rect.topleft = (start_x + BUTTON_SIZE[0] + BUTTON_MARGIN, button_y)
+    store_rect.topleft = (start_x + 2 * (BUTTON_SIZE[0] + BUTTON_MARGIN), button_y)
+
+    return settings_rect, discord_rect, store_rect
+
+
+settings_rect, discord_rect, store_rect = position_buttons(screen)
+
+
+# Fade In/Out Functions
+def fade_in(surface, screen, speed=FADE_SPEED):
+    alpha = 0
+    while alpha < 255:
+        surface.set_alpha(alpha)
+        screen.fill((0, 0, 0))
+        screen.blit(surface, surface.get_rect(center=screen.get_rect().center))
+        pygame.display.update()
+        alpha += speed
+        clock.tick(60)
+
+
+def fade_out(surface, screen, speed=FADE_SPEED):
+    alpha = 255
+    while alpha > 0:
+        surface.set_alpha(alpha)
+        screen.fill((0, 0, 0))
+        screen.blit(surface, surface.get_rect(center=screen.get_rect().center))
+        pygame.display.update()
+        alpha -= speed
+        clock.tick(60)
+
+
+def wait(seconds):
+    start_ticks = pygame.time.get_ticks()
+    while (pygame.time.get_ticks() - start_ticks) < seconds * 1000:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+
+# Main Game Loop
+def main():
+    global logo, click_image, logo_rect, click_image_rect, settings_rect, discord_rect, store_rect
+    click_count = load_save_data()
+    show_logo = True
+    in_settings = False
+
+    resolution = DEFAULT_RESOLUTION
+
+    def set_resolution(value, res):
+        nonlocal resolution
+        resolution = res
+        pygame.display.set_mode(resolution)
+        resize_assets()
+
+    def clear_save_data():
+        nonlocal click_count
+        click_count = 0
+        save_data(click_count)
+
+    def create_settings_menu():
+        menu = pygame_menu.Menu('Settings', 400, 300, theme=pygame_menu.themes.THEME_DARK)
+
+        menu.add.selector('Resolution :', [(f'{w}x{h}', (w, h)) for w, h in RESOLUTIONS], onchange=set_resolution)
+        menu.add.button('Clear Save Data', clear_save_data)
+        menu.add.button('Return to Game', lambda: menu.disable())
+        return menu
+
+    def resize_assets():
+        global logo, click_image, logo_rect, click_image_rect, settings_rect, discord_rect, store_rect
+        logo = resize_image(pygame.image.load(LOGO_PATH), LOGO_SIZE_RATIO, screen)
+        click_image = resize_image(pygame.image.load(CLICK_IMAGE_PATH), CLICK_IMAGE_RATIO, screen)
+        logo_rect = center_image(logo, screen)
+        click_image_rect = center_image(click_image, screen)
+        settings_rect, discord_rect, store_rect = position_buttons(screen)
+
+    settings_menu = create_settings_menu()
+
+    while True:
+        screen.fill((0, 0, 0))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                save_data(click_count)
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if settings_menu.is_enabled():
+                        settings_menu.disable()
+                    else:
+                        settings_menu.enable()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if show_logo:
+                    fade_out(logo, screen)
+                    show_logo = False
+                else:
+                    if click_image_rect.collidepoint(event.pos):
+                        click_count += 1
+                    elif settings_rect.collidepoint(event.pos):
+                        settings_menu.enable()
+                    elif discord_rect.collidepoint(event.pos):
+                        webbrowser.open('https://discord.com/invite/2nHHHBWNDw')
+                    elif store_rect.collidepoint(event.pos):
+                        webbrowser.open('https://store.steampowered.com/')
+
+        if show_logo:
+            fade_in(logo, screen)
+            wait(3)  # Wait for 3 seconds
+            fade_out(logo, screen)
+            show_logo = False
+        elif settings_menu.is_enabled():
+            settings_menu.mainloop(screen)
         else:
-            window.blit(store_icon, button_rect)
+            screen.blit(click_image, click_image_rect)
+            font = pygame.font.Font(None, 74)
+            text = font.render(str(click_count), True, (255, 255, 255))
+            screen.blit(text, text.get_rect(center=(screen.get_width() // 2, 50)))
 
-    # Draw the settings menu
-    if settings_menu_open:
-        settings_menu_rect = pygame.Rect(WINDOW_WIDTH // 4, WINDOW_HEIGHT // 4, WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
-        pygame.draw.rect(window, (200, 200, 200), settings_menu_rect)
+            screen.blit(settings_icon, settings_rect)
+            screen.blit(discord_icon, discord_rect)
+            screen.blit(store_icon, store_rect)
 
-        # Draw resolution options
-        font = pygame.font.Font(None, 24)
-        y = settings_menu_rect.top + 20
-        for i, resolution in enumerate(available_resolutions):
-            text = font.render(f"{resolution[0]}x{resolution[1]}", True, (0, 0, 0))
-            text_rect = text.get_rect(topleft=(settings_menu_rect.left + 20, y))
-            window.blit(text, text_rect)
-            if i == resolution_index:
-                pygame.draw.rect(window, (255, 0, 0), text_rect, 2)
-            y += 30
+        pygame.display.flip()
+        clock.tick(60)
 
-        # Draw fullscreen toggle
-        fullscreen_text = font.render("Fullscreen", True, (0, 0, 0))
-        fullscreen_text_rect = fullscreen_text.get_rect(topleft=(settings_menu_rect.left + 20, y))
-        window.blit(fullscreen_text, fullscreen_text_rect)
-        if is_fullscreen:
-            pygame.draw.rect(window, (0, 255, 0), fullscreen_text_rect, 2)
-        else:
-            pygame.draw.rect(window, (255, 0, 0), fullscreen_text_rect, 2)
 
-    # Update the display
-    pygame.display.flip()
-
-# Save click count
-with open(save_data_path, "w") as file:
-    file.write(str(click_count))
-
-# Quit Pygame
-pygame.quit()
+if __name__ == "__main__":
+    main()
