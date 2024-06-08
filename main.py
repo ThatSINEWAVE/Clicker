@@ -55,7 +55,7 @@ def save_data(click_count):
 
 # Screen Setup
 screen = pygame.display.set_mode(DEFAULT_RESOLUTION)
-pygame.display.set_caption("Clicker Game")
+pygame.display.set_caption("SINEWAVE's Clicker Game")
 clock = pygame.time.Clock()
 
 
