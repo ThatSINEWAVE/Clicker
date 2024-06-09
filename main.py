@@ -22,7 +22,7 @@ CLICK_IMAGE_PATH = "assets/clicker/click_image.png"
 SETTINGS_ICON_PATH = "assets/icons/Settings.png"
 DISCORD_ICON_PATH = "assets/icons/Discord.png"
 STORE_ICON_PATH = "assets/icons/Store.png"
-SAVE_DATA_PATH = "save_data.txt"
+SAVE_DATA_PATH = "save_data.json"
 
 # Available Resolutions
 RESOLUTIONS = [
@@ -41,16 +41,18 @@ RESOLUTIONS = [
 
 # Load Save Data
 def load_save_data():
-    if os.path.exists(SAVE_DATA_PATH):
+    try:
         with open(SAVE_DATA_PATH, "r") as file:
             data = json.load(file)
             return data.get("click_count", 0)
-    return 0
+    except FileNotFoundError:
+        return 0
 
 
 def save_data(click_count):
+    data = {"click_count": click_count}
     with open(SAVE_DATA_PATH, "w") as file:
-        json.dump({"click_count": click_count}, file)
+        json.dump(data, file)
 
 
 # Screen Setup
