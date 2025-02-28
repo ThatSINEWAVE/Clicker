@@ -2,7 +2,7 @@
 
 # SINEWAVE's Clicker Game
 
-Welcome to SINEWAVE's Clicker Game! This is simple yet addictive game will keep you entertained for hours as you strive to achieve the highest click count possible. Whether you're a casual gamer or a seasoned pro, there's something here for everyone.
+Welcome to SINEWAVE's Clicker Game! This is simple yet addictive game will keep you entertained for hours as you strive to achieve the highest click count possible.
 
 </div>
 
@@ -12,8 +12,8 @@ The rules are simple:
 
 1. **Click**: Click anywhere on the screen to increase your click count.
 2. **Settings**: Access the settings menu by clicking on the gear icon. Here you can adjust the game's resolution or clear your save data if needed.
-3. **Discord**: Connect with other players and discuss strategies by clicking on the Discord icon.
-4. **Store**: Visit our Steam store page for more exciting games and updates by clicking on the store icon.
+3. **Discord**: Connect with other players by clicking on the Discord icon.
+4. **Store**: Visit our Steam store page for more exciting games and updates by clicking on the store icon. (Coming Soon)
 
 <div align="center">
 
